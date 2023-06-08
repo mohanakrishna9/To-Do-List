@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+      $(document).ready(function () {
+        $("#addTaskModal").on("shown.bs.modal", function () {
+          $("#taskInput").trigger("focus");
+        });
+
+        $("#deleteTaskModal").on("show.bs.modal", function (event) {
+          var button = $(event.relatedTarget);
+          var task = button.data("task");
+          var modal = $(this);
+          modal
+            .find(".modal-body")
+            .text("Are you sure you want to delete task: " + task + "?");
+          modal.find("#deleteButton").data("task", task);
+        });
+
+        $("#deleteButton").click(function () {
+          var task = $(this).data("task");
+          $("#" + task).remove();
+          $("#deleteTaskModal").modal("hide");
+          showToast("Task deleted: " + task);
+        });
+
+        $("#taskForm").submit(function (event) {
+          event.preventDefault();
+          var taskInput = $("#taskInput");
+          var categoryInput = $("#categoryInput");
+          var timeInput = $("#timeInput");
+          var task = taskInput.val();
+          var category = categoryInput.val();
+          var time = timeInput.val();
+
+          if (task === "") {
+            taskInput.addClass("is-invalid");
+            return;
+          }
+          if ($("#" + task).length) {
+            showToast("Task already exists: " + task, "warning");
+            return;
+          }
+
+          var existingTask = $('[data-time="' + time + '"]');
+          if (existingTask.length > 0) {
+            showToast(
+              "Warning: Same time allotted for multiple tasks.",
+              "warning"
+            );
+            return;
+          }
+
+          var row = $(
+            '<tr id="' +
+              task +
+              '"><td>' +
+              task +
+              "</td><td>" +
+              time +
+              "</td><td>" +
+              category +
+              '</td><td><button class="btn btn-danger btn-sm delete-task" data-toggle="modal" data-target="#deleteTaskModal" data-task="' +
+              task +
+              '">Delete</button></td></tr>'
+          );
+          row.attr("data-time", time);
+          $("#taskTable tbody").append(row);
+          $("#addTaskModal").modal("hide");
+          taskInput.val("");
+          categoryInput.val("");
+          timeInput.val("");
+          showToast("Task added: " + task);
+        });
+
+        $("#taskInput").keyup(function () {
+          $(this).removeClass("is-invalid");
+        });
+
+        function showToast(message, type = "success") {
+          var toast = $(
+            '<div class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-delay="3000"><div class="toast-body"></div></div>'
+          );
+          toast.addClass("bg-" + type);
+          toast.find(".toast-body").text(message);
+          $(".toast-container").append(toast);
+          toast.toast("show");
+          toast.on("hidden.bs.toast", function () {
+            $(this).remove();
+          });
+        }
+      });
+      function getGreeting() {
+        var currentHour = new Date().getHours();
+        var greeting, emoji;
+        if (currentHour >= 5 && currentHour < 12) {
+          greeting = "Good Morning";
+          emoji = "🌞";
+        } else if (currentHour >= 12 && currentHour < 18) {
+          greeting = "Good Afternoon";
+          emoji = "☀️";
+        } else {
+          greeting = "Good Evening";
+          emoji = "🌙";
+        }
+        return greeting + " " + emoji;
+      }
+
+      $(function () {
+        $("#greeting").text(getGreeting());
+      });
+    </script>
+    <style>
+      body {
+        font-family: "Montserrat", sans-serif;
+        font-size: 12px;
+        background-color: beige;
+      }
+      .toast-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 9999;
+      }
+
+      .toast {
+        background-color: rgba(255, 255, 255, 0.5);
+        opacity: 0.5;
+        margin-bottom: 3px;
+      }
+
+      @media (max-width: 576px) {
+        .modal-dialog-centered {
+          min-height: calc(100% - (1rem * 2));
+        }
+      }
+      h2 {
+        text-decoration: underline;
+        text-decoration-color: coral;
+        margin-top: 10px;
+        padding-bottom: 1px;
+      }
+      table {
+        border-collapse: collapse;
+      }
+
+      .custom-table th {
+        border: 1px solid black;
+      }
+      .custom-table td {
+        border: 1px solid black;
+      }
+      .custom-table {
+        border: 2px solid black;
+      }
+    </style>
+  </head>
+
+  <body>
+    <center>
+      <h2>To do List</h2>
+      <h7>"Master Your Productivity, One Task at a Time"</h7>
+    </center>
+    <div class="container py-5">
+      <h1 class="text-center" id="greeting"></h1>
+      <button
+        class="btn btn-primary btn-sm"
+        data-toggle="modal"
+        data-target="#addTaskModal"
+      >
+        Add Task
+      </button>
+      <div class="toast-container"></div>
+
+      <!-- Add Task Modal -->
+      <div class="modal fade" id="addTaskModal">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Add Task</h5>
+              <button type="button" class="close" data-dismiss="modal">
+                &times;
+              </button>
+            </div>
+            <div class="modal-body">
+              <form id="taskForm">
+                <div class="form-group">
+                  <label for="taskInput">Task:</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="taskInput"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="timeInput">Time:</label>
+                  <input
+                    type="time"
+                    class="form-control"
+                    id="timeInput"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="categoryInput">Category:</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="categoryInput"
+                    placeholder="Ex.:Study"
+                    required
+                  />
+                </div>
+                <button type="submit" class="btn btn-primary">Add</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Delete Task Modal -->
+      <div class="modal fade" id="deleteTaskModal">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-body"></div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-danger" id="deleteButton">
+                Delete
+              </button>
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-dismiss="modal"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Task Table -->
+      <table
+        class="table table-bordered table-striped mt-3 custom-table"
+        id="taskTable"
+      >
+        <thead>
+          <tr>
+            <th>Task</th>
+            <th>Time</th>
+            <th>Category</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Tasks will be added dynamically here -->
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>
